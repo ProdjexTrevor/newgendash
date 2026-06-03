@@ -7,12 +7,20 @@ import { getPool } from "./db.js";
 import { analyticsRouter } from "./routes/analytics.js";
 import { healthRouter } from "./routes/health.js";
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-dotenv.config({ path: path.join(__dirname, "../../.env.local") });
-dotenv.config({ path: path.join(__dirname, "../.env.local") });
-dotenv.config({ path: path.join(__dirname, "../../.env") });
-dotenv.config({ path: path.join(__dirname, "../.env") });
-dotenv.config();
+/** Load .env files locally; on Vercel, env vars are injected directly. */
+function loadEnvFiles(): void {
+  if (process.env.VERCEL) return;
+  try {
+    const __dirname = path.dirname(fileURLToPath(import.meta.url));
+    dotenv.config({ path: path.join(__dirname, "../../.env.local") });
+    dotenv.config({ path: path.join(__dirname, "../.env.local") });
+    dotenv.config({ path: path.join(__dirname, "../../.env") });
+    dotenv.config({ path: path.join(__dirname, "../.env") });
+  } catch {
+    dotenv.config();
+  }
+}
+loadEnvFiles();
 
 function corsOrigin(): string | string[] | boolean {
   if (process.env.CLIENT_ORIGIN) return process.env.CLIENT_ORIGIN;

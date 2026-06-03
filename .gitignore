@@ -3,6 +3,8 @@ dist/
 .env
 .env.local
 client/.env.local
+api/index.js
+api/index.js.map
 *.log
 .DS_Store
 *.tsbuildinfo
