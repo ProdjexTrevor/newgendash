@@ -6,6 +6,7 @@ import { ScorecardPage } from "./pages/ScorecardPage";
 import { TrendsPage } from "./pages/TrendsPage";
 import { ManagementPage } from "./pages/ManagementPage";
 import { RegionReportPage } from "./pages/RegionReportPage";
+import { ComparePage } from "./pages/ComparePage";
 import "./index.css";
 
 createRoot(document.getElementById("root")!).render(
@@ -15,6 +16,7 @@ createRoot(document.getElementById("root")!).render(
         <Routes>
           <Route path="/" element={<ManagementPage />} />
           <Route path="/region-report" element={<RegionReportPage />} />
+          <Route path="/compare" element={<ComparePage />} />
           <Route path="/scorecard" element={<ScorecardPage />} />
           <Route path="/trends" element={<TrendsPage />} />
         </Routes>
