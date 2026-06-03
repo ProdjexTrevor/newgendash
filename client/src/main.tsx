@@ -5,6 +5,7 @@ import { Layout } from "./components/Layout";
 import { ScorecardPage } from "./pages/ScorecardPage";
 import { TrendsPage } from "./pages/TrendsPage";
 import { ManagementPage } from "./pages/ManagementPage";
+import { RegionReportPage } from "./pages/RegionReportPage";
 import "./index.css";
 
 createRoot(document.getElementById("root")!).render(
@@ -13,6 +14,7 @@ createRoot(document.getElementById("root")!).render(
       <Layout>
         <Routes>
           <Route path="/" element={<ManagementPage />} />
+          <Route path="/region-report" element={<RegionReportPage />} />
           <Route path="/scorecard" element={<ScorecardPage />} />
           <Route path="/trends" element={<TrendsPage />} />
         </Routes>

@@ -5,6 +5,7 @@ import { formatQuarterLabel } from "../lib/quarters";
 
 const reportLinks = [
   { to: "/", label: "Quarterly report", end: true },
+  { to: "/region-report", label: "Quarter report (simple)" },
   { to: "/scorecard", label: "Regional scorecard" },
   { to: "/trends", label: "Trends over time" },
 ];
