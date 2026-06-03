@@ -11,8 +11,14 @@ await esbuild.build({
   format: "cjs",
   outfile: "api/index.js",
   sourcemap: true,
-  // Native / runtime deps — resolved from node_modules on Vercel
   external: ["mysql2", "express", "cors", "dotenv", "zod"],
+  footer: {
+    js: `
+if (module.exports.default) {
+  module.exports = module.exports.default;
+}
+`,
+  },
   logLevel: "info",
 });
 
