@@ -35,7 +35,7 @@ export function getPool(): mysql.Pool {
     password: cfg.password,
     database: cfg.database,
     waitForConnections: true,
-    connectionLimit: 10,
+    connectionLimit: process.env.VERCEL ? 1 : 10,
     connectTimeout: 30000,
     ssl: cfg.ssl ? { rejectUnauthorized: false } : undefined,
   });

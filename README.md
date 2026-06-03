@@ -116,29 +116,26 @@ Run `.\bootstrap.ps1` on Windows to install and start both.
 
 ---
 
-## Deploy to Vercel (UI)
+## Deploy to Vercel (UI + API)
 
-The React client deploys to [Vercel](https://vercel.com). The Express + MySQL API must run elsewhere (Railway, Render, DigitalOcean App Platform, etc.) because Vercel does not host long-lived database connections.
+Everything can run on [Vercel](https://vercel.com): the React app as static files and the Express API as a **serverless function** that queries your MySQL database on each request.
 
-1. Push this repo to GitHub (see below).
-2. In Vercel: **Import** → select **newgendash** → set **Root Directory** to `client`.
-3. Add environment variable **`VITE_API_URL`** = your hosted API URL (e.g. `https://newgendash-api.onrender.com`), no trailing slash.
-4. Deploy. Vercel runs `npm run build` and serves `dist/`.
+1. Import **newgendash** in Vercel (repo root — no Root Directory override needed).
+2. Add these **Environment Variables** in the Vercel project settings:
 
-Host the API with `npm run build && npm start` from the repo root (or deploy the `server` folder). Set on the API:
+| Variable | Example |
+|----------|---------|
+| `MYSQL_HOST` | `your-db.db.ondigitalocean.com` |
+| `MYSQL_PORT` | `25060` |
+| `MYSQL_USER` | `doadmin` |
+| `MYSQL_PASSWORD` | *(secret)* |
+| `MYSQL_DATABASE` | `newgendata` |
+| `MYSQL_SSL` | `true` |
 
-- `MYSQL_*` — database credentials
-- `CLIENT_ORIGIN` — your Vercel URL (e.g. `https://newgendash.vercel.app`)
-- `PORT` — platform-assigned port
+3. Deploy. No `VITE_API_URL` needed — the UI calls `/api/...` on the same domain.
 
----
+**Database firewall:** DigitalOcean must allow inbound connections from Vercel (often “all IPs” / `0.0.0.0/0` for serverless, or Vercel Static IPs on Pro).
 
-## Push to GitHub
+**Limits:** Serverless functions have a **30s** timeout (configured in `vercel.json`). Heavy queries may need tuning on Pro for longer runs.
 
-```powershell
-git add .
-git commit -m "feat: quarterly reporting dashboard"
-git remote add origin https://github.com/ProdjexTrevor/newgendash.git
-git branch -M main
-git push -u origin main
-```
+Local dev is unchanged: `npm run dev` runs UI + API separately with Vite proxying `/api`.

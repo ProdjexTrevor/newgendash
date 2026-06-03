@@ -2,6 +2,10 @@
   "name": "newgeneration",
   "private": true,
   "version": "1.0.0",
+  "workspaces": [
+    "client",
+    "server"
+  ],
   "scripts": {
     "dev": "concurrently -n api,ui -c green,blue \"npm run dev --prefix server\" \"npm run dev --prefix client\"",
     "dev:server": "npm run dev --prefix server",
