@@ -101,11 +101,28 @@ export type RegionalComparisonResponse = {
 async function get<T>(path: string): Promise<T> {
   const base = import.meta.env.VITE_API_URL?.replace(/\/$/, "") ?? "";
   const res = await fetch(`${base}${path}`);
+  const text = await res.text();
   if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
-    throw new Error(body.error ?? `Request failed: ${res.status}`);
+    try {
+      const body = JSON.parse(text) as { error?: string };
+      throw new Error(body.error ?? `Request failed: ${res.status}`);
+    } catch {
+      throw new Error(
+        text.startsWith("<!")
+          ? `API returned HTML instead of JSON (${res.status}). Check that /api routes are deployed.`
+          : `Request failed: ${res.status}`
+      );
+    }
   }
-  return res.json();
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    throw new Error(
+      text.startsWith("<!")
+        ? "API returned HTML instead of JSON. Check Vercel /api deployment and MYSQL_* env vars."
+        : "Invalid JSON response from API"
+    );
+  }
 }
 
 export type MetricYoY = {

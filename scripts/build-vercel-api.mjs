@@ -1,7 +1,7 @@
 import * as esbuild from "esbuild";
 import { mkdirSync } from "node:fs";
 
-mkdirSync("api", { recursive: true });
+mkdirSync("lib", { recursive: true });
 
 await esbuild.build({
   entryPoints: ["server/src/vercel-entry.ts"],
@@ -9,7 +9,7 @@ await esbuild.build({
   platform: "node",
   target: "node20",
   format: "cjs",
-  outfile: "api/index.js",
+  outfile: "lib/vercel-api.cjs",
   sourcemap: true,
   external: ["mysql2", "express", "cors", "dotenv", "zod"],
   footer: {
@@ -22,4 +22,4 @@ if (module.exports.default) {
   logLevel: "info",
 });
 
-console.log("Built api/index.js for Vercel");
+console.log("Built lib/vercel-api.cjs for Vercel");
