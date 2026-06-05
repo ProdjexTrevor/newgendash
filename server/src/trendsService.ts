@@ -1,4 +1,5 @@
 import { query, num } from "./db.js";
+import { formatPlaceName } from "./formatPlaceName.js";
 import { normalizeQuarterEnd } from "./quarterDates.js";
 
 export type MovementTrendPoint = {
@@ -163,9 +164,9 @@ export async function getTrendFilterOptions(
     countries: countries.map((c) => c.country),
     engagements: engagements.map((e) => ({
       engagement_id: num(e.engagement_id),
-      name: e.name,
-      region: e.region,
-      country: e.country,
+      name: formatPlaceName(e.name) || e.name,
+      region: formatPlaceName(e.region),
+      country: formatPlaceName(e.country),
     })),
   };
 }
@@ -240,7 +241,7 @@ export async function getRegionalComparisonTrends(
   const byQuarter = new Map<string, Record<string, string | number>>();
 
   for (const r of rows) {
-    const reg = String(r.region);
+    const reg = formatPlaceName(String(r.region));
     const qe = quarterEndIso(r.quarter_date);
     regionSet.add(reg);
     if (!byQuarter.has(qe)) {

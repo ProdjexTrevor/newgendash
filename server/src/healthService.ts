@@ -1,4 +1,5 @@
 import { query, num } from "./db.js";
+import { formatPlaceName } from "./formatPlaceName.js";
 
 export type QuarterOption = { date: string; row_count: number };
 
@@ -324,11 +325,20 @@ export async function getHealthIssues(
     [...params, opts.limit, opts.offset]
   );
 
-  return { rows, total: num(countRows[0]?.total) };
+  return {
+    rows: rows.map((r) => ({
+      ...r,
+      region: formatPlaceName(r.region),
+      country: formatPlaceName(r.country),
+      people_group: formatPlaceName(r.people_group),
+      engagement_name: formatPlaceName(r.engagement_name),
+    })),
+    total: num(countRows[0]?.total),
+  };
 }
 
 export async function getRegionHealth(quarterEnd: string): Promise<RegionHealth[]> {
-  return query<RegionHealth>(
+  const rows = await query<RegionHealth>(
     `
     ${ISSUE_ROW_CTE}
     SELECT
@@ -345,6 +355,7 @@ export async function getRegionHealth(quarterEnd: string): Promise<RegionHealth[
     `,
     [quarterEnd]
   );
+  return rows.map((r) => ({ ...r, region: formatPlaceName(r.region) }));
 }
 
 export async function getQuarterTrends(limit = 15): Promise<QuarterTrend[]> {
@@ -502,7 +513,7 @@ export async function getRegionalScorecard(quarterEnd: string): Promise<Scorecar
       .slice(0, 3);
 
     const base = {
-      region: r.region,
+      region: formatPlaceName(r.region),
       quarter_end: quarterEnd,
       total_rows: total,
       active_rows: num(r.active_rows),

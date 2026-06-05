@@ -221,10 +221,13 @@ export type TopPerformerRow = {
   country: string;
   people_group: string;
   engagement_name?: string;
+  engagement_id?: number | null;
   new_disciples: number;
   new_baptisms: number;
   total_churches: number;
+  dbs: number;
   mbb_disciples: number;
+  leaders_in_training: number;
   market_share_pct: number | null;
   r_number: number | null;
 };

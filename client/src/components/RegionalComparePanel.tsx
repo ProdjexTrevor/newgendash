@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { api, type RegionalComparisonResponse } from "../api";
+import { formatPlaceName } from "../lib/formatPlaceName";
 import { TrendLineChart, seriesForRegions } from "./TrendLineChart";
 
 const METRICS = [
@@ -119,7 +120,7 @@ export function RegionalComparePanel({ dateFrom, dateTo, allRegions }: Props) {
               onChange={() => toggleRegion(r)}
               className="rounded border-slate-300 text-brand-600"
             />
-            {r}
+            {formatPlaceName(r)}
           </label>
         ))}
       </div>

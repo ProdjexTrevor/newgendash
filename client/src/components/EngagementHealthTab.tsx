@@ -7,6 +7,7 @@ import {
   type HealthBandLabel,
 } from "../api";
 import { SortableTable } from "./SortableTable";
+import { formatPlaceName } from "../lib/formatPlaceName";
 import { normalizeQuarterDate } from "../lib/quarters";
 
 const BAND_STYLES: Record<HealthBandLabel, string> = {
@@ -549,7 +550,7 @@ function FilterSelect({
         <option value="">All</option>
         {options.map((o) => (
           <option key={o} value={o}>
-            {o}
+            {formatPlaceName(o)}
           </option>
         ))}
       </select>

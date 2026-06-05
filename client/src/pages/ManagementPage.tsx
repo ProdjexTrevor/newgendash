@@ -10,6 +10,7 @@ import {
   type TopPerformerRow,
 } from "../api";
 import { EngagementHealthTab } from "../components/EngagementHealthTab";
+import { formatPlaceName } from "../lib/formatPlaceName";
 import { AreaSummaryCards } from "../components/AreaSummaryCards";
 import { SortableTable } from "../components/SortableTable";
 import { ReportHelp } from "../components/ReportHelp";
@@ -77,6 +78,7 @@ export function ManagementPage() {
   const [reportingSummary, setReportingSummary] = useState<EngagementReportingSummary | null>(null);
   const [notReportingSearch, setNotReportingSearch] = useState("");
   const [loading, setLoading] = useState(true);
+  const [topLoading, setTopLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [globalKpi, setGlobalKpi] = useState<RollupRow | null>(null);
   const [showMoreColumns, setShowMoreColumns] = useState(false);
@@ -106,17 +108,15 @@ export function ManagementPage() {
     try {
       const missingGroup =
         level === "engagement" ? "country" : level === "global" ? "global" : level;
-      const [r, g, m, t, notReportingRes] = await Promise.all([
+      const [r, g, m, notReportingRes] = await Promise.all([
         api.analyticsRollup({ date, level, region, country }),
         api.analyticsRollup({ date, level: "global" }),
         api.analyticsMissing({ date, groupBy: missingGroup }),
-        api.analyticsTop({ date, metric: topMetric }),
         api.analyticsNotReporting(date),
       ]);
       setRollup(r.rows);
       setGlobalKpi(g.rows[0] ?? null);
       setMissing(m.reports);
-      setTop(t.rows);
       setNotReporting(notReportingRes.rows);
       setReportingSummary(notReportingRes.summary);
     } catch (e) {
@@ -124,11 +124,29 @@ export function ManagementPage() {
     } finally {
       setLoading(false);
     }
-  }, [quarter, level, region, country, topMetric]);
+  }, [quarter, level, region, country]);
+
+  const loadTop = useCallback(async () => {
+    const date = normalizeQuarterDate(quarter);
+    if (!date) return;
+    setTopLoading(true);
+    try {
+      const t = await api.analyticsTop({ date, metric: topMetric });
+      setTop(t.rows);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to load highlights");
+    } finally {
+      setTopLoading(false);
+    }
+  }, [quarter, topMetric]);
 
   useEffect(() => {
     load();
   }, [load]);
+
+  useEffect(() => {
+    loadTop();
+  }, [loadTop]);
 
   useEffect(() => {
     setSearch("");
@@ -292,32 +310,63 @@ export function ManagementPage() {
     [essentialColumns, moreColumns, advancedColumns, showMoreColumns, showAdvanced]
   );
 
-  const topColumns = useMemo((): ColumnDef<TopPerformerRow>[] => [
-    { accessorKey: "region", header: "Region" },
-    { accessorKey: "country", header: "Country" },
-    { accessorKey: "people_group", header: "People group" },
-    { accessorKey: "engagement_name", header: "Engagement" },
-    {
-      accessorKey: "new_disciples",
-      header: "New disciples",
+  const topColumns = useMemo((): ColumnDef<TopPerformerRow>[] => {
+    const metricHighlight =
+      "bg-brand-50 font-semibold text-brand-900 tabular-nums";
+    const numCell = (key: keyof TopPerformerRow, header: string): ColumnDef<TopPerformerRow> => ({
+      accessorKey: key,
+      header,
+      meta: {
+        align: "right" as const,
+        nowrap: true,
+        className: key === topMetric ? metricHighlight : "tabular-nums",
+        headerClassName: key === topMetric ? "text-brand-800" : "",
+      },
       cell: ({ getValue }) => fmt(getValue() as number),
-    },
-    {
-      accessorKey: "new_baptisms",
-      header: "Baptisms",
-      cell: ({ getValue }) => fmt(getValue() as number),
-    },
-    {
-      accessorKey: "total_churches",
-      header: "Churches",
-      cell: ({ getValue }) => fmt(getValue() as number),
-    },
-    {
-      accessorKey: "mbb_disciples",
-      header: "MBB disciples",
-      cell: ({ getValue }) => fmt(getValue() as number),
-    },
-  ], []);
+    });
+
+    return [
+      {
+        accessorKey: "region",
+        header: "Region",
+        meta: { minWidth: "9rem", className: "text-slate-600" },
+      },
+      {
+        accessorKey: "country",
+        header: "Country",
+        meta: { minWidth: "8rem", className: "text-slate-600" },
+      },
+      {
+        accessorKey: "people_group",
+        header: "People group",
+        meta: { minWidth: "9rem", className: "text-slate-600 max-w-[10rem] truncate" },
+        cell: ({ getValue }) => (
+          <span className="block max-w-[10rem] truncate" title={String(getValue() ?? "")}>
+            {String(getValue() ?? "")}
+          </span>
+        ),
+      },
+      {
+        accessorKey: "engagement_name",
+        header: "Engagement",
+        meta: { minWidth: "11rem", className: "font-medium text-slate-900" },
+        cell: ({ row }) => (
+          <span
+            className="block max-w-[14rem] truncate"
+            title={row.original.engagement_name ?? row.original.people_group}
+          >
+            {row.original.engagement_name ?? row.original.people_group}
+          </span>
+        ),
+      },
+      numCell("new_disciples", "New disciples"),
+      numCell("new_baptisms", "Baptisms"),
+      numCell("dbs", "DBS"),
+      numCell("total_churches", "Churches"),
+      numCell("mbb_disciples", "MBB disciples"),
+      numCell("leaders_in_training", "Leaders"),
+    ];
+  }, [topMetric]);
 
   const filteredNotReporting = useMemo(() => {
     const q = notReportingSearch.trim().toLowerCase();
@@ -433,9 +482,9 @@ export function ManagementPage() {
       </div>
 
       {error && <ErrorBlock message={error} />}
-      {loading && <LoadingBlock />}
+      {loading && !rollup.length && <LoadingBlock />}
 
-      {!loading && !error && (
+      {quarter && !error && (
         <Tabs aria-label="Report sections" variant="underline">
           <TabItem active title="By area">
             <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
@@ -455,14 +504,14 @@ export function ManagementPage() {
                       className={`font-medium ${level === "country" ? "text-slate-900" : "text-brand-700 hover:underline"}`}
                       onClick={() => drillTo("country", region)}
                     >
-                      {region}
+                      {formatPlaceName(region)}
                     </button>
                   </>
                 )}
                 {country && (
                   <>
                     <span className="text-slate-300">›</span>
-                    <span className="text-slate-900 font-medium">{country}</span>
+                    <span className="text-slate-900 font-medium">{formatPlaceName(country)}</span>
                   </>
                 )}
               </nav>
@@ -592,12 +641,17 @@ export function ManagementPage() {
                   </option>
                 ))}
               </select>
+              {topLoading && <span className="text-slate-400 text-xs">Updating…</span>}
             </label>
             <SortableTable
+              key={topMetric}
               data={top}
               columns={topColumns}
-              defaultSort={[{ id: "new_disciples", desc: true }]}
+              defaultSort={[{ id: topMetric, desc: true }]}
+              dense
               stickyFirstColumn
+              stickyColumnIndex={3}
+              tableLayout="fixed"
             />
           </TabItem>
 

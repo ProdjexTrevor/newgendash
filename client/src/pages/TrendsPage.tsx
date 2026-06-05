@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { api, type MovementTrendPoint } from "../api";
+import { formatPlaceName } from "../lib/formatPlaceName";
 import { TrendLineChart } from "../components/TrendLineChart";
 import { RegionalComparePanel } from "../components/RegionalComparePanel";
 import { ErrorBlock, LoadingBlock, PageHeader } from "../components/Layout";
@@ -100,8 +101,8 @@ export function TrendsPage() {
       const e = engagements.find((x) => String(x.engagement_id) === engagementId);
       return e ? `Engagement: ${e.name}` : "Engagement";
     }
-    if (country) return `Country: ${country}`;
-    if (region) return `Region: ${region}`;
+    if (country) return `Country: ${formatPlaceName(country)}`;
+    if (region) return `Region: ${formatPlaceName(region)}`;
     return "Worldwide (all regions)";
   }, [region, country, engagementId, engagements]);
 
@@ -189,7 +190,7 @@ export function TrendsPage() {
                   <option value="">All regions</option>
                   {regions.map((r) => (
                     <option key={r} value={r}>
-                      {r}
+                      {formatPlaceName(r)}
                     </option>
                   ))}
                 </select>
@@ -204,7 +205,7 @@ export function TrendsPage() {
                   <option value="">All countries</option>
                   {countries.map((c) => (
                     <option key={c} value={c}>
-                      {c}
+                      {formatPlaceName(c)}
                     </option>
                   ))}
                 </select>
@@ -224,7 +225,7 @@ export function TrendsPage() {
                 <option value="">All engagements in scope</option>
                 {engagements.map((e) => (
                   <option key={e.engagement_id} value={e.engagement_id}>
-                    {e.name} ({e.country})
+                    {formatPlaceName(e.name)} ({formatPlaceName(e.country)})
                   </option>
                 ))}
               </select>

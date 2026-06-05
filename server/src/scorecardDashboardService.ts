@@ -1,4 +1,5 @@
 import { query, num } from "./db.js";
+import { formatPlaceName } from "./formatPlaceName.js";
 import { normalizeQuarterEnd, priorYearQuarterEnd } from "./quarterDates.js";
 
 export type MetricYoY = {
@@ -225,7 +226,7 @@ export async function getRegionalMovementDashboard(quarterEnd: string): Promise<
       const metrics = buildMetrics(current, prior);
       const yoy_summary = computeYoYTrend(metrics);
       return {
-        region,
+        region: formatPlaceName(region),
         quarter_end: qEnd,
         prior_year_quarter: priorY,
         row_count: current.row_count,

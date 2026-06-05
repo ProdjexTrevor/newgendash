@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { formatPlaceName } from "../lib/formatPlaceName";
 import {
   CartesianGrid,
   Legend,
@@ -34,7 +35,7 @@ export const REGION_LINE_COLORS = [
 export function seriesForRegions(regions: string[]): TrendSeries[] {
   return regions.map((region, i) => ({
     key: region,
-    name: region,
+    name: formatPlaceName(region),
     color: REGION_LINE_COLORS[i % REGION_LINE_COLORS.length],
   }));
 }

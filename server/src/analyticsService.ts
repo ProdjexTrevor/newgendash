@@ -1,4 +1,5 @@
 import { query, num } from "./db.js";
+import { formatPlaceName } from "./formatPlaceName.js";
 import { normalizeQuarterEnd, priorQuarterEnd } from "./quarterDates.js";
 
 export type RollupLevel = "global" | "region" | "country" | "engagement";
@@ -264,12 +265,15 @@ function aggregate(rows: EngagementRow[], level: RollupLevel, key: string, label
   const gens = rows.map((r) => r.gen);
   const rNums = rows.map((r) => r.r_number).filter((x): x is number => x != null);
 
-  return {
+    return {
     level,
     key,
-    label,
-    region: level === "region" || level === "country" ? rows[0]?.region : undefined,
-    country: level === "country" ? rows[0]?.country : undefined,
+    label: formatPlaceName(label),
+    region:
+      level === "region" || level === "country"
+        ? formatPlaceName(rows[0]?.region ?? "")
+        : undefined,
+    country: level === "country" ? formatPlaceName(rows[0]?.country ?? "") : undefined,
     row_count: rows.length,
     com_churches: sum((r) => r.com_churches),
     cat_churches: sum((r) => r.cat_churches),
@@ -342,8 +346,17 @@ export async function getRollup(
   }
   return rows
     .map((r) => {
-      const row = aggregate([r], "engagement", String(r.ng_key), r.engagement_name || r.people_group);
-      return { ...row, region: r.region, country: r.country };
+      const row = aggregate(
+        [r],
+        "engagement",
+        String(r.ng_key),
+        r.engagement_name || r.people_group
+      );
+      return {
+        ...row,
+        region: formatPlaceName(r.region),
+        country: formatPlaceName(r.country),
+      };
     })
     .sort((a, b) => b.new_disciples - a.new_disciples);
 }
@@ -436,7 +449,16 @@ export async function getTopPerformers(
     r_number: (r) => r.r_number ?? 0,
   };
   const fn = metricMap[String(metric)] ?? ((r: EngagementRow) => r.new_disciples);
-  return [...all].sort((a, b) => fn(b) - fn(a)).slice(0, limit);
+  return [...all]
+    .sort((a, b) => fn(b) - fn(a))
+    .slice(0, limit)
+    .map((r) => ({
+      ...r,
+      region: formatPlaceName(r.region),
+      country: formatPlaceName(r.country),
+      people_group: formatPlaceName(r.people_group),
+      engagement_name: formatPlaceName(r.engagement_name),
+    }));
 }
 
 export type ConcernEngagement = {
@@ -558,10 +580,10 @@ export async function getConcernEngagements(quarterEnd: string): Promise<Concern
       if (!reasons.length) return null;
       return {
         engagement_id: r.engagement_id,
-        region: r.region,
-        country: r.country,
-        people_group: r.people_group,
-        engagement_name: r.engagement_name || r.people_group,
+        region: formatPlaceName(r.region),
+        country: formatPlaceName(r.country),
+        people_group: formatPlaceName(r.people_group),
+        engagement_name: formatPlaceName(r.engagement_name || r.people_group),
         reasons,
         new_disciples: r.new_disciples,
         new_baptisms: r.new_baptisms,
@@ -652,10 +674,11 @@ export async function getNotReportingEngagements(quarterEnd: string): Promise<{
 
     out.push({
       engagement_id: id,
-      region: String(row.region ?? ""),
-      country: String(row.country ?? ""),
-      people_group: String(row.people_group ?? ""),
-      engagement_name: String(row.engagement_name ?? "") || String(row.people_group ?? ""),
+      region: formatPlaceName(String(row.region ?? "")),
+      country: formatPlaceName(String(row.country ?? "")),
+      people_group: formatPlaceName(String(row.people_group ?? "")),
+      engagement_name:
+        formatPlaceName(String(row.engagement_name ?? "") || String(row.people_group ?? "")),
       last_reported_quarter: lastSub,
       quarters_not_reported: quartersMissed,
       missed_quarter_labels: missedLabels,
@@ -682,13 +705,13 @@ export async function getCrisisByRegion(quarterEnd: string) {
     byRegion.get(c.region)!.push(c);
   }
   return [...byRegion.entries()].map(([region, rows]) => ({
-    region,
+    region: formatPlaceName(region),
     total_engagements: rows.length,
     crisis_engagements: rows.length,
     crisis_pct: 0,
     sample_notes: rows.slice(0, 3).map((r) => ({
-      country: r.country,
-      people_group: r.people_group,
+      country: formatPlaceName(r.country),
+      people_group: formatPlaceName(r.people_group),
       note: r.reasons.join("; "),
       keywords: "",
     })),

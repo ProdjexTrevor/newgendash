@@ -1,4 +1,5 @@
 import { query, num } from "./db.js";
+import { formatPlaceName } from "./formatPlaceName.js";
 import {
   ATTRITION_RATE_BANDS,
   DBS_CHURCH_RATIO_IDEAL,
@@ -505,7 +506,13 @@ export async function getEngagementHealthScoreboard(
     if (filters.stage_tag && scored.stage_tag !== filters.stage_tag) continue;
     if (filters.level_tag && scored.level_tag !== filters.level_tag) continue;
 
-    rows.push(scored);
+    rows.push({
+      ...scored,
+      engagement_name: formatPlaceName(scored.engagement_name),
+      people_group: formatPlaceName(scored.people_group),
+      country: formatPlaceName(scored.country),
+      region: formatPlaceName(scored.region),
+    });
   }
 
   rows.sort((a, b) => b.health_score - a.health_score);
